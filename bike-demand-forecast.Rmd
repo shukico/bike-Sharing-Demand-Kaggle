@@ -2,10 +2,10 @@
 # Forecasting bikes demand
 Participating in Kaggle competition to forecast bikes sharing demand system, made the following code presenting some supervising methods.
 
-'''{r}
+```{r}
 train <- read.csv("C:\\Users\\ofer\\Dropbox\\Data mining and Machine Learning\\Bike rental competition - Kaggle\\train.csv")
 test <- read.csv("C:\\Users\\ofer\\Dropbox\\Data mining and Machine Learning\\Bike rental competition - Kaggle\\test.csv")
-'''
+```
 
 # str(train)
 
