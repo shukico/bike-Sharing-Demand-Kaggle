@@ -1,6 +1,7 @@
 
 # Forecasting bikes demand
-Participating in Kaggle competition to forecast bikes sharing demand system, made the following code presenting some supervising methods.
+Participating in Kaggle competition to forecast bikes sharing demand system, made the following code presenting some supervising methods. here is a link where you can find additional information about the datasets and the competition settings: https://www.kaggle.com/c/bike-sharing-demand
+
 
 ### Loading the data from Kaggle
 ```{r}
@@ -8,7 +9,7 @@ train <- read.csv("..\\train.csv")
 test <- read.csv("..\\test.csv")
 ```
 
-spliting to train and test datasets
+Spliting to train and test datasets
 ```{r}
 train_factor <- train
 train_factor$weather <- factor(train$weather)
@@ -21,24 +22,21 @@ test_factor$weather <- factor(test$weather)
 test_factor$holiday <- factor(test$holiday)
 test_factor$workingday <- factor(test$workingday)
 test_factor$season <- factor(test$season)
-
-View(test_factor)
 ```
 
-
-
-# create time column
+##Data Preparation
+Create time column
+```{r}
 train_factor$time <- substring(train$datetime,12,20)
 test_factor$time <- substring(test$datetime,12,20)
 
-str(train_factor)
-
-
 train_factor$time <- factor(train_factor$time)
 test_factor$time <- factor(test_factor$time)
+```
 
 
-#create day of week column
+Create day of week column
+```{r}
 install.packages("lubridate")
 library(lubridate)
 
@@ -46,13 +44,10 @@ train_factor$day <- weekdays(as.Date(train_factor$datetime))
 train_factor$day <- as.factor(train_factor$day)
 test_factor$day <- weekdays(as.Date(test_factor$datetime))
 test_factor$day <- as.factor(test_factor$day)
+```
 
-aggregate(train_factor[,"count"],list(train_factor$day),mean)
-
-plot(train_factor$count~train_factor$day, type = 'c', xlab = 'hello')
-
-
-#create Sunday variable
+Create Sunday variable
+```{r}
 train_factor$sunday[train_factor$day == "Sunday"] <- "1"                   
 train_factor$sunday[train_factor$day != "Sunday"] <- "0"
 
@@ -62,39 +57,31 @@ test_factor$sunday[test_factor$day != "Sunday"] <- "0"
 #convert to factor
 train_factor$sunday <- as.factor(train_factor$sunday)
 test_factor$sunday <- as.factor(test_factor$sunday)
+```
 
-#convert time and create $hour as integer to evaluate for daypart
+Create hour variable
+```{r}
 train_factor$hour<- as.numeric(substr(train_factor$time,1,2))
 test_factor$hour<- as.numeric(substr(test_factor$time,1,2))
-
-#create daypart column, default to 4 to make things easier for ourselves
-train_factor$daypart <- "5"
-test_factor$daypart <- "5"
-
+```
+Create daypart column
+```{r}
 install.packages("car")
 library(car)
 
-# Plots
+train_factor$daypart <- "5"
+test_factor$daypart <- "5"
 
-#scatterplot(train_factor$count~train_factor$hour , main="Scatterplot Example", xlab="Car Weight ", ylab="Miles Per Gallon ", pch=19)
-
-#scatterplot(train_factor$registered~train_factor$hour , main="Scatterplot Example", xlab="Car Weight ", ylab="Miles Per Gallon ", pch=19)
-
-#scatterplot(train_factor$casual~train_factor$hour , main="Scatterplot Example", xlab="Car Weight ", ylab="Miles Per Gallon ", pch=10)
-
-#plot(train_factor$casual~train_factor$hour, type = "h")
-
+#Based on the following graph, daypart bining was made
 plot(train_factor$count~train_factor$hour, type = "h")
 
 #23PM - 6AM = 1
 train_factor$daypart[(train_factor$hour < 7) | (train_factor$hour > 22)] <- 1
 test_factor$daypart[(test_factor$hour < 7) | (test_factor$hour > 22)] <- 1
 
-
 #7AM - 10AM = 2
 train_factor$daypart[(train_factor$hour > 6 ) & (train_factor$hour < 11)] <- 2
 test_factor$daypart[(test_factor$hour > 6) & (test_factor$hour < 11)] <- 2
-
 
 #11AM - 15PM = 3
 train_factor$daypart[(train_factor$hour > 10) & (train_factor$hour < 16)] <- 3
@@ -111,52 +98,41 @@ test_factor$daypart <- as.factor(test_factor$daypart)
 #convert hour back to factor
 train_factor$hour <- as.factor(train_factor$hour)
 test_factor$hour <- as.factor(test_factor$hour)
+```
 
-#making year a new variable
-
+Making year a new variable
+```{r}
 train_factor$year <- as.integer(substr(train_factor$datetime,	1,4))
 train_factor$year <- as.factor(train_factor$year)
 
 test_factor$year <- as.integer(substr(test_factor$datetime,  1,4))
 test_factor$year <- as.factor(test_factor$year)
-
-str(train_factor)
-
-# View(train_factor)
-
-# deleting NVA cols
-
+```
+Deleting NVA cols
+```{r}
 train_factor$datetime <- NULL
 train_factor$time <- NULL
-
-# test_factor$datetime <- NULL
-# test_factor$time <- NULL
+```
 
 
-### Start evaluating models! ###
-
-# Difinitions
+## Data analysis 
+Begin with basic libraries and MSE function
+```{r}
 library(magrittr)
 library(dplyr)
 MSE <- function(x) x^2 %>% mean
+```
 
-
-
-# OLS
-rm(ols.1)
+OLS
+```{r}
 ols.1 <- lm(train_factor$count~season + holiday + workingday + weather + temp + atemp + humidity + windspeed + day + sunday + hour + daypart ,data = train_factor)
 
 # Train error:
-predict(ols.1)
-summary (ols.1)
-ols.1$coef
-# plot(ols.1)
-
 MSE( predict(ols.1)- train_factor$count)
-# MSE( predict(ols.1)- prostate.train$lcavol)
-# Test error:
 
+# Test error:
 MSE( predict(ols.1, newdata = test_factor)- test_factor$count)
+```
 
 
 
